@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Build Your Dream Soccer Team</title>
+<style>
+:root{--green:#17633f;--deep:#103d2b;--gold:#f4c95d;--ink:#17251d;--muted:#66756b;--paper:#f4f7f2}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:linear-gradient(145deg,#eaf3e9,#f8f6ed);color:var(--ink)}
+main{max-width:1000px;margin:auto;padding:22px}.hero{background:linear-gradient(135deg,var(--deep),#218451);color:white;padding:26px;border-radius:22px;box-shadow:0 12px 30px #123b2522}
+h1{margin:0 0 8px;font-size:clamp(28px,5vw,42px)}.sub{color:#d9eddf}.top{display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap}
+input{font:inherit;padding:11px 13px;border-radius:10px;border:1px solid #cbd8cd;background:white;max-width:100%}.progress{height:12px;background:#ffffff40;border-radius:99px;overflow:hidden;margin:16px 0 7px}.bar{height:100%;background:var(--gold);width:0;transition:.25s}
+.controls{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}.controls input{flex:1;min-width:180px}
+button{font:inherit;border:0;border-radius:11px;padding:10px 14px;background:var(--green);color:white;font-weight:700;cursor:pointer}button:hover{filter:brightness(1.08)}button:disabled{opacity:.4;cursor:not-allowed}.secondary{background:#e5ece5;color:var(--ink)}.small{padding:7px 10px;font-size:14px}
+h2{margin:22px 0 8px}.hint{color:var(--muted);font-size:14px}.pitch{background:repeating-linear-gradient(90deg,#267b4c 0 10%,#2b8654 10% 20%);border:5px solid white;border-radius:20px;padding:18px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;box-shadow:0 5px 18px #123b2515}
+.player{background:#ffffffed;border:2px solid transparent;border-radius:14px;padding:12px;text-align:center;min-height:125px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px}.player.unlocked{border-color:var(--gold);background:#fff9df}.pos{font-size:11px;font-weight:900;letter-spacing:1px;color:var(--green)}.shirt{font-size:29px}.player strong{font-size:14px}.player small{color:var(--muted)}
+.panel{background:white;border-radius:18px;padding:18px;margin-top:18px;box-shadow:0 5px 18px #123b2510}.challenge{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center}.word{font-size:28px;font-weight:850;color:var(--deep)}.status{font-weight:700;color:var(--green);min-height:24px}.actions{display:flex;gap:8px;flex-wrap:wrap}.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-top:12px}
+@media(max-width:560px){main{padding:12px}.pitch{grid-template-columns:repeat(2,1fr);padding:10px}.challenge{grid-template-columns:1fr}.hero{padding:20px}}
+</style>
+</head>
+<body><main>
+<section class="hero">
+<div class="top"><div><div style="font-weight:800;letter-spacing:2px;color:#f4d77d">SOCCER SPEECH CHALLENGE</div><h1>Build Your Dream Team ⚽</h1><div class="sub">Say the target word accurately to recruit your starting XI!</div></div><div style="font-size:52px">🏆</div></div>
+<div class="progress"><div class="bar" id="bar"></div></div><div class="top"><strong id="count">0 / 11 players recruited</strong><span id="teamTitle">Your team</span></div>
+</section>
+<div class="controls"><input id="teamName" value="Dream Team" aria-label="Team name" placeholder="Name your team"><button onclick="updateTeam()">Save team name</button><button class="secondary" onclick="resetTeam()">Reset game</button></div>
+<h2>⚽ Your starting lineup</h2><p class="hint">Choose a player card below. Complete three accurate productions with the level of support planned by your clinician, then recruit that player.</p>
+<section class="pitch" id="pitch"></section>
+<section class="panel" id="challenge"><h2>Choose a player to begin</h2><p class="hint">Select any position on the field to see its speech challenge.</p></section>
+<div class="legend"><span>🟢 Recruited player</span><span>🔒 Not yet recruited</span><span>⭐ 3 accurate productions unlock a player</span></div>
+</main>
+<script>
+const players=[
+{pos:'GK',name:'Goalkeeper',word:'Rabbit',goal:'Initial /r/'},
+{pos:'RB',name:'Right Back',word:'Rocket',goal:'Initial /r/'},
+{pos:'CB',name:'Center Back',word:'Carrot',goal:'Medial /r/'},
+{pos:'CB',name:'Center Back',word:'Pirate',goal:'Medial /r/'},
+{pos:'LB',name:'Left Back',word:'Car',goal:'Final /r/'},
+{pos:'CDM',name:'Defensive Midfielder',word:'Earnest',goal:'Initial vocalic /er/'},
+{pos:'CM',name:'Central Midfielder',word:'Person',goal:'Medial vocalic /er/'},
+{pos:'CAM',name:'Attacking Midfielder',word:'Purple',goal:'Medial vocalic /er/'},
+{pos:'RW',name:'Right Winger',word:'Teacher',goal:'Final vocalic /er/'},
+{pos:'ST',name:'Striker',word:'Sister',goal:'Final vocalic /er/'},
+{pos:'LW',name:'Left Winger',word:'Computer',goal:'Final vocalic /er/'}
+];
+let recruited=new Set(),attempts=Array(11).fill(0),selected=null;
+function render(){
+ document.getElementById('pitch').innerHTML=players.map((p,i)=>'<button class="player '+(recruited.has(i)?'unlocked':'')+'" onclick="selectPlayer('+i+')" style="color:var(--ink)"><span class="pos">'+p.pos+'</span><span class="shirt">'+(recruited.has(i)?'👕':'🔒')+'</span><strong>'+p.name+'</strong><small>'+(recruited.has(i)?'Recruited':p.goal)+'</small></button>').join('');
+ document.getElementById('count').textContent=recruited.size+' / 11 players recruited';
+ document.getElementById('bar').style.width=(recruited.size/11*100)+'%';
+ document.getElementById('teamTitle').textContent=document.getElementById('teamName').value||'Your team';
+}
+function selectPlayer(i){selected=i;const p=players[i];document.getElementById('challenge').innerHTML='<div class="top"><div><div class="pos">'+p.pos+'</div><h2>'+p.name+'</h2></div><div style="font-size:36px">⚽</div></div><div class="hint">Speech target: '+p.goal+'</div><div class="word">'+p.word+'</div><p class="hint">Have the player say this word accurately three times. Use your planned moderate cues as needed.</p><div class="status" id="status">'+(recruited.has(i)?'Already recruited! Choose another player.':attempts[i]+' of 3 accurate productions')+'</div><div class="actions"><button onclick="score(true)" '+(recruited.has(i)?'disabled':'')+'>✓ Accurate production</button><button class="secondary" onclick="score(false)" '+(recruited.has(i)?'disabled':'')+'>Try again</button></div>';}
+function score(ok){if(selected===null||recruited.has(selected))return;if(ok)attempts[selected]=Math.min(3,attempts[selected]+1);const p=players[selected];if(attempts[selected]>=3){recruited.add(selected);document.getElementById('challenge').innerHTML='<div style="text-align:center;padding:16px"><div style="font-size:48px">🎉⚽</div><h2>Player recruited!</h2><p>'+p.name+' has joined your team!</p><button onclick="nextPlayer()">Choose next player</button></div>';}else{document.getElementById('status').textContent=attempts[selected]+' of 3 accurate productions'+(ok?' — great job!':' — listen, reset, and try again.');}render();}
+function nextPlayer(){selected=null;document.getElementById('challenge').innerHTML='<h2>Choose your next player</h2><p class="hint">Select another position on the field.</p>';}
+function updateTeam(){render();}
+function resetTeam(){if(confirm('Reset all recruited players and start over?')){recruited.clear();attempts=Array(11).fill(0);selected=null;render();nextPlayer();}}
+render();
+</script></body></html>
